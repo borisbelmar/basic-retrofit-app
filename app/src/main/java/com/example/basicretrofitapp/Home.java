@@ -26,7 +26,7 @@ public class Home extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 SharedPreferences.Editor editor = preferences.edit();
-                editor.remove("email");
+                editor.remove("token");
                 editor.commit();
 
                 Intent intent = new Intent(view.getContext(), Login.class);

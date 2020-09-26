@@ -21,7 +21,7 @@ public class Splash extends AppCompatActivity {
             @Override
             public void run() {
                 preferences = getSharedPreferences("user", Context.MODE_PRIVATE);
-                if (preferences.contains("email")) {
+                if (preferences.contains("token")) {
                     Intent intent = new Intent(getBaseContext(), Home.class);
                     startActivity(intent);
                     finish();
