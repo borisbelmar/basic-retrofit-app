@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Basic Retrofit App</string>
+
+    <!-- Validations -->
+    <string name="error_required">El campo no puede estar vacío</string>
+    <string name="error_not_zero">El valor no puede ser 0</string>
+    <string name="error_number">Debe ser un número</string>
+    <string name="error_email">Debe ser un email válido</string>
+    <string name="error_date">Debe ser una fecha válida</string>
+    <string name="error_password_equals">Las contraseñas deben coincidir</string>
+    <string name="error_terms">Debes aceptar los términos y condiciones</string>
+</resources>
