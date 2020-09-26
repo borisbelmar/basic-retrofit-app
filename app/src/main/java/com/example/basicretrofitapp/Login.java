@@ -6,14 +6,24 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.basicretrofitapp.dto.AccessTokenDTO;
+import com.example.basicretrofitapp.dto.LoginDTO;
 import com.example.basicretrofitapp.models.User;
+import com.example.basicretrofitapp.services.RetrofitClient;
+import com.example.basicretrofitapp.services.UserService;
 import com.example.basicretrofitapp.utils.InputValidator;
 import com.google.android.material.textfield.TextInputLayout;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
 
 public class Login extends AppCompatActivity {
 
@@ -21,6 +31,7 @@ public class Login extends AppCompatActivity {
     private Button btnSubmit;
     private TextView tvRegister;
     private SharedPreferences preferences;
+    private Retrofit retrofit;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,20 +59,36 @@ public class Login extends AppCompatActivity {
                 inputValidator.isRequired(tilPassword);
 
                 if (inputValidator.validate()) {
-                    if (email.equals("test@gmail.com") && password.equals("123456")) {
+                    retrofit = RetrofitClient.getRetrofitInstance();
+                    UserService service = retrofit.create(UserService.class);
+                    Call<AccessTokenDTO> call = service.login(new LoginDTO(email, password));
 
-                        SharedPreferences.Editor editor = preferences.edit();
-                        editor.putString("email", email);
-                        editor.commit();
+                    call.enqueue(new Callback<AccessTokenDTO>() {
+                        @Override
+                        public void onResponse(Call<AccessTokenDTO> call, Response<AccessTokenDTO> response) {
+                            if(response.isSuccessful()) {
+                                String token = response.body().getAccessToken();
 
-                        Toast.makeText(getBaseContext(), "Bienvenido", Toast.LENGTH_SHORT).show();
-                        Intent intent = new Intent(view.getContext(), Home.class);
-                        startActivity(intent);
-                        finish();
-                    } else {
-                        Toast.makeText(getBaseContext(), "Credenciales erroneas", Toast.LENGTH_SHORT).show();
-                    }
+                                SharedPreferences.Editor editor = preferences.edit();
+                                editor.putString("token", token);
+                                editor.commit();
 
+                                Log.e("Token", token);
+
+                                Toast.makeText(getBaseContext(), "Token: " + token, Toast.LENGTH_SHORT).show();
+                                Intent intent = new Intent(view.getContext(), Home.class);
+                                startActivity(intent);
+                                finish();
+                            } else {
+                                Toast.makeText(getBaseContext(), "Credenciales erroneas", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                        @Override
+                        public void onFailure(Call<AccessTokenDTO> call, Throwable t) {
+                            t.printStackTrace();
+                            Toast.makeText(getBaseContext(), "Error al conectarse con el servicio", Toast.LENGTH_SHORT).show();
+                        }
+                    });
                 } else {
                     Toast.makeText(getBaseContext(), "Asegurate de completar bien los campos", Toast.LENGTH_SHORT).show();
                 }

@@ -11,17 +11,27 @@ import android.widget.DatePicker;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.basicretrofitapp.dto.AccessTokenDTO;
+import com.example.basicretrofitapp.dto.LoginDTO;
 import com.example.basicretrofitapp.models.User;
+import com.example.basicretrofitapp.services.RetrofitClient;
+import com.example.basicretrofitapp.services.UserService;
 import com.example.basicretrofitapp.ui.DatePickerFragment;
 import com.example.basicretrofitapp.utils.DateConvert;
 import com.example.basicretrofitapp.utils.InputValidator;
 import com.google.android.material.textfield.TextInputLayout;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
 
 public class Register extends AppCompatActivity {
 
     private TextInputLayout tilFirstname, tilLastname, tilEmail, tilBirth, tilPassword, tilPasswordRepeat;
     private Button btnSubmit;
     private TextView tvLogin;
+    private Retrofit retrofit;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,14 +77,36 @@ public class Register extends AppCompatActivity {
                 inputValidator.isEqual(tilPasswordRepeat, tilPassword);
 
                 if (inputValidator.validate()) {
+                    retrofit = RetrofitClient.getRetrofitInstance();
+                    UserService service = retrofit.create(UserService.class);
                     User newUser = new User(email, firstname, lastname)
                             .withPassword(password)
                             .withBirth(birth);
-                    Toast.makeText(getBaseContext(), newUser.toString(), Toast.LENGTH_SHORT).show();
+                    Call<User> call = service.register(newUser);
 
-                    Intent intent = new Intent(v.getContext(), Login.class);
-                    startActivity(intent);
-                    finish();
+                    call.enqueue(new Callback<User>() {
+                        @Override
+                        public void onResponse(Call<User> call, Response<User> response) {
+                            if (response.isSuccessful()) {
+                                User registeredUser = response.body();
+                                Toast.makeText(getBaseContext(), registeredUser.toString(), Toast.LENGTH_SHORT).show();
+
+                                Intent intent = new Intent(v.getContext(), Login.class);
+                                startActivity(intent);
+                                finish();
+                            } else if (response.code() == 409) {
+                                Toast.makeText(getBaseContext(), "El usuario ya existe", Toast.LENGTH_SHORT).show();
+                            } else {
+                                Toast.makeText(getBaseContext(), "Error desconocido", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<User> call, Throwable t) {
+                            t.printStackTrace();
+                            Toast.makeText(getBaseContext(), "Error al conectarse con el servicio", Toast.LENGTH_SHORT).show();
+                        }
+                    });
                 } else {
                     Toast.makeText(getBaseContext(), "Asegurate de completar bien los campos", Toast.LENGTH_SHORT).show();
                 }
